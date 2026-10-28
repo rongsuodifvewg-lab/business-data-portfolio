@@ -75,9 +75,26 @@ def main():
         "roc_auc": float(roc_auc_score(y_test, pred)),
         "average_precision": float(average_precision_score(y_test, pred)),
         "brier_score": float(brier_score_loss(y_test, pred)),
+        "overall_test_conversion_rate": float(y_test.mean()),
         "note": "Predictive metrics describe ranking/calibration and do not establish causal effects.",
     }
     (OUT / "model_metrics.json").write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Business targeting view: how concentrated are buyers in the highest-score sessions?
+    scored = pd.DataFrame({"actual": y_test.to_numpy(), "score": pred}).sort_values("score", ascending=False).reset_index(drop=True)
+    targeting_rows = []
+    for share in [0.05, 0.10, 0.20, 0.30, 0.50, 1.00]:
+        n = max(1, int(np.ceil(len(scored) * share)))
+        selected = scored.head(n)
+        targeting_rows.append({
+            "top_session_share": share,
+            "sessions": n,
+            "buyers": int(selected["actual"].sum()),
+            "conversion_rate": selected["actual"].mean(),
+            "lift_vs_test_average": selected["actual"].mean() / y_test.mean() if y_test.mean() else np.nan,
+            "share_of_test_buyers_captured": selected["actual"].sum() / y_test.sum() if y_test.sum() else np.nan,
+        })
+    pd.DataFrame(targeting_rows).to_csv(OUT / "targeting_thresholds.csv", index=False)
 
     prep_fitted = model.named_steps["prep"]
     feature_names = prep_fitted.get_feature_names_out()

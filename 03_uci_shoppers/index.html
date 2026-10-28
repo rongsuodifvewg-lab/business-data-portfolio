@@ -1,1 +1,41 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>电商转化分析</title><style>body{max-width:900px;margin:36px auto;padding:0 22px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.65}h1,h2{color:#173f67}img{max-width:100%;margin:10px 0}a{color:#1f6598}</style></head><body><p><a href="../index.html">返回作品集</a></p><h1>电商转化漏斗与用户行为分析</h1><p><b>业务问题：</b>哪些用户场景和站内行为与购买转化最相关？产品和运营应该优先优化什么？</p><h2>关键结果</h2><ul><li>新访客转化率约 24.9%，回访访客约 13.9%。</li><li>11 月转化率约 25.4%，2 月约 1.6%，季节性和流量结构是重要经营变量。</li><li>逻辑回归留出测试 ROC-AUC 约 0.897，说明具备转化排序能力，但不代表因果效果。</li></ul><img src="results/conversion_by_month.png" alt="月度转化趋势"><p><a href="EXECUTIVE_REPORT.md">执行摘要</a> · <a href="README.md">复现说明</a> · <a href="src/analyze_uci_shoppers.py">Python脚本</a> · <a href="sql/analysis.sql">SQL</a></p></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UCI 电商转化漏斗与用户行为分析</title>
+  <style>body{max-width:960px;margin:32px auto;padding:0 24px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.7}h1,h2,h3{color:#173f67}h1{border-bottom:3px solid #173f67;padding-bottom:10px}.lead{font-size:18px;background:#edf3f8;padding:16px;border-left:4px solid #2d6a9f}table{border-collapse:collapse;width:100%;margin:14px 0}th,td{border:1px solid #dce3ea;padding:9px;text-align:left}th{background:#edf3f8}img{max-width:100%;margin:12px 0}a{color:#1f6598}code{background:#f2f4f6;padding:2px 4px}.links{background:#f7f9fb;padding:14px}</style>
+</head>
+<body>
+  <p><a href="../index.html">返回作品集首页</a></p>
+  <h1>电商转化漏斗与用户行为分析</h1>
+  <p class="lead"><b>决策问题：</b>哪些用户场景和站内行为与购买转化最相关？产品、运营和再营销团队应该优先优化什么？</p>
+
+  <h2>一、业务背景与初步洞察</h2>
+  <p>电商团队经常看到“本月转化率下降”，但单一总指标不能说明问题发生在哪个环节：可能是流量质量变化、页面浏览深度不足、退出率上升、季节性变化，也可能只是用户结构不同。本项目因此把总指标拆成用户、月份和页面行为三个层次。</p>
+
+  <h2>二、为什么选择这个数据集</h2>
+  <p>UCI Online Shoppers Purchasing Intention Dataset 是会话级电商数据，共 12,330 次网站会话，包含页面访问次数、页面停留时间、跳出率、退出率、PageValues、月份、用户类型、周末和最终购买标记 <code>Revenue</code>。</p>
+  <p>它适合回答“转化发生在哪里、哪些信号能帮助排序”，也适合构建 SQL 指标和经营看板。它没有随机处理组，因此本项目明确定位为描述性/预测性分析，不把相关关系包装成因果关系。</p>
+  <p>来源：<a href="https://archive.ics.uci.edu/dataset/468/online+shoppers+purchasing+intention+dataset">UCI Dataset</a></p>
+
+  <h2>三、问题、假设与指标</h2>
+  <h3>假设</h3><ul><li>H1：产品页浏览深度和 PageValues 较高的会话具有更高转化概率。</li><li>H2：退出率和跳出率较高的会话转化概率较低。</li><li>H3：月份和用户类型改变转化基线，经营看板需要分层。</li></ul>
+  <table><tr><th>指标</th><th>定义</th><th>业务用途</th></tr><tr><td>Session conversion</td><td><code>Revenue=True / sessions</code></td><td>网站整体转化</td></tr><tr><td>Product depth</td><td><code>ProductRelated</code></td><td>产品浏览深度</td></tr><tr><td>Product duration</td><td><code>ProductRelated_Duration</code></td><td>产品页停留</td></tr><tr><td>Exit rate</td><td>数据集提供的退出率</td><td>页面流失信号</td></tr><tr><td>PageValues</td><td>数据集提供的页面价值</td><td>高意向信号</td></tr></table>
+
+  <h2>四、分析方法与验证</h2>
+  <h3>1. 描述性拆解</h3><p>把 <code>Revenue</code> 和 <code>Weekend</code> 转为二元变量，确认 18 个字段类型和目标变量比例；按用户类型、月份和周末输出会话数、购买数、转化率、PageValues 和退出率。</p>
+  <h3>2. 行为画像</h3><p>比较买家和非买家的产品页访问次数、产品页停留、跳出率、退出率和 PageValues。这一步用于形成可解释的经营假设，例如“高退出率页面可能需要优化信息承接”，但不直接声称这些行为导致购买。</p>
+  <h3>3. 预测排序</h3><p>使用数值变量标准化、类别变量 one-hot 和逻辑回归，留出 25% 测试集并按 Revenue 分层。报告 ROC-AUC、Average Precision 和 Brier Score；再按模型分数排序，计算前 5%、10%、20%、30%、50%会话的转化率和买家覆盖率，回答“如果只能优先触达一部分会话，排序是否有价值”。</p>
+
+  <h2>五、结果与洞察</h2>
+  <table><tr><th>切分</th><th>转化率</th><th>解释</th></tr><tr><td>新访客</td><td>24.9%</td><td>高于回访访客，需要进一步检查流量来源和购买意图</td></tr><tr><td>回访访客</td><td>13.9%</td><td>不能简单等同为高价值人群</td></tr><tr><td>11 月</td><td>25.4%</td><td>高意向月份，需准备库存和承接能力</td></tr><tr><td>2 月</td><td>1.6%</td><td>需要排查流量质量、季节性和页面匹配</td></tr></table>
+  <ul><li>买家平均浏览产品页约 48.2 页、产品页停留约 1,876 秒；非买家分别约 28.7 页和 1,070 秒。</li><li>买家平均 PageValues 约 27.3，非买家约 2.0；买家退出率和跳出率也更低。</li><li>逻辑回归留出测试 ROC-AUC 约 0.897，Average Precision 约 0.620，Brier Score 约 0.124。</li><li>模型分数最高的前 10% 会话转化率约 67.6%，覆盖测试集中约 43.8% 的买家；这说明排序可用于再营销优先级，但不代表采取动作会产生因果增量。</li></ul>
+  <img src="results/conversion_by_month.png" alt="月度转化趋势"><img src="results/buyer_behavior_profile.png" alt="买家与非买家行为画像">
+
+  <h2>六、商业结论与行动建议</h2><ol><li>经营看板同时展示总体转化率、用户类型、月份、PageValues、产品页深度和退出率，避免只看总数。</li><li>将 PageValues、产品页深度和退出率作为再营销候选排序信号；预算不足时先验证高分会话的增量价值。</li><li>11 月等高意向月份重点准备库存、客服和落地页承接；2 月等低转化月份先排查流量来源、页面匹配和数据口径。</li><li>对页面改版、推荐模块或再营销策略设计 A/B 测试，使用增量转化、增量毛利和退款率作为主要/保护指标。</li></ol>
+
+  <h2>七、局限性</h2><ul><li>数据没有随机处理组，所有行为差异都不能直接解释为因果关系。</li><li>数据集没有订单金额、成本、渠道投放成本和长期价值，不能直接计算 ROI。</li><li>数据是历史会话截面，模型在其他时期或其他网站上的表现需要重新验证。</li><li>逻辑回归是可解释基线，上线前要做时间切分、概率校准和漂移监控。</li></ul>
+
+  <h2>八、复现与证据</h2><div class="links"><a href="EXECUTIVE_REPORT.md">Markdown 完整报告</a> · <a href="src/analyze_uci_shoppers.py">Python 分析脚本</a> · <a href="sql/analysis.sql">SQL 查询</a> · <a href="results/visitor_type_summary.csv">访客类型统计</a> · <a href="results/month_summary.csv">月度统计</a> · <a href="results/buyer_behavior_summary.csv">买家行为</a> · <a href="results/model_metrics.json">模型指标</a> · <a href="results/targeting_thresholds.csv">预测排序阈值</a> · <a href="README.md">项目复现说明</a></div>
+</body>
+</html>

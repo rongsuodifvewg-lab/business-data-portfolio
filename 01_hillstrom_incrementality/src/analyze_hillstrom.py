@@ -91,6 +91,28 @@ def main():
     group_summary.to_csv(OUT / "group_summary.csv", index=False)
     effects.to_csv(OUT / "effect_vs_control.csv", index=False)
 
+    # Pre-treatment balance check: standardized mean differences (SMD).
+    # Values below |0.1| are commonly treated as a reasonable balance signal.
+    balance_rows = []
+    control = df[df["segment"] == control_name]
+    numeric_balance = ["recency", "history", "mens", "womens", "newbie"]
+    for treatment in ["Mens E-Mail", "Womens E-Mail"]:
+        treated_balance = df[df["segment"] == treatment]
+        for col in numeric_balance:
+            mt, mc = treated_balance[col].mean(), control[col].mean()
+            vt, vc = treated_balance[col].var(ddof=1), control[col].var(ddof=1)
+            pooled = np.sqrt((vt + vc) / 2)
+            balance_rows.append({"treatment": treatment, "variable": col, "level": "__all__", "smd": (mt - mc) / pooled if pooled else 0.0})
+        for col in ["history_segment", "zip_code", "channel"]:
+            levels = sorted(set(treated_balance[col].astype(str)) | set(control[col].astype(str)))
+            for level in levels:
+                pt = (treated_balance[col].astype(str) == level).mean()
+                pc = (control[col].astype(str) == level).mean()
+                pooled = np.sqrt((pt * (1 - pt) + pc * (1 - pc)) / 2)
+                balance_rows.append({"treatment": treatment, "variable": col, "level": level, "smd": (pt - pc) / pooled if pooled else 0.0})
+    balance = pd.DataFrame(balance_rows)
+    balance.to_csv(OUT / "balance_check.csv", index=False)
+
     subgroup_rows = []
     control = df[df["segment"] == control_name]
     for subgroup in ["history_segment", "newbie", "channel"]:

@@ -1,0 +1,37 @@
+treatment,variable,level,smd
+Mens E-Mail,recency,__all__,0.006831532454259954
+Mens E-Mail,history,__all__,0.00761286832154239
+Mens E-Mail,mens,__all__,-0.0045823256374879625
+Mens E-Mail,womens,__all__,0.007588929691887142
+Mens E-Mail,newbie,__all__,-0.0008918953696535328
+Mens E-Mail,history_segment,1) $0 - $100,0.010916976746243505
+Mens E-Mail,history_segment,2) $100 - $200,-0.016359927097071392
+Mens E-Mail,history_segment,3) $200 - $350,0.005470841971244085
+Mens E-Mail,history_segment,4) $350 - $500,-0.004257523375734979
+Mens E-Mail,history_segment,5) $500 - $750,-0.009740357963757846
+Mens E-Mail,history_segment,"6) $750 - $1,000",0.0060733601228462305
+Mens E-Mail,history_segment,"7) $1,000 +",0.015834964430086848
+Mens E-Mail,zip_code,Rural,0.013659320946457812
+Mens E-Mail,zip_code,Surburban,-0.01174363231732483
+Mens E-Mail,zip_code,Urban,0.0019722778608723414
+Mens E-Mail,channel,Multichannel,-0.00418163455128495
+Mens E-Mail,channel,Phone,-0.008276186526812186
+Mens E-Mail,channel,Web,0.011013846819585203
+Womens E-Mail,recency,__all__,0.005180013205688683
+Womens E-Mail,history,__all__,0.006510722458553667
+Womens E-Mail,mens,__all__,-0.008630731202832915
+Womens E-Mail,womens,__all__,0.004946313992582152
+Womens E-Mail,newbie,__all__,0.0025567009140795606
+Womens E-Mail,history_segment,1) $0 - $100,-0.0006771289436280001
+Womens E-Mail,history_segment,2) $100 - $200,-0.014286482498573621
+Womens E-Mail,history_segment,3) $200 - $350,0.011351154565446223
+Womens E-Mail,history_segment,4) $350 - $500,0.00867810320638658
+Womens E-Mail,history_segment,5) $500 - $750,0.0006499576260867136
+Womens E-Mail,history_segment,"6) $750 - $1,000",-0.008819513394649732
+Womens E-Mail,history_segment,"7) $1,000 +",0.003499474032277342
+Womens E-Mail,zip_code,Rural,0.0039585983245235
+Womens E-Mail,zip_code,Surburban,-0.001089145250116948
+Womens E-Mail,zip_code,Urban,-0.0017629079224844475
+Womens E-Mail,channel,Multichannel,-0.005283020872802079
+Womens E-Mail,channel,Phone,0.00862303526167356
+Womens E-Mail,channel,Web,-0.005147984480878577

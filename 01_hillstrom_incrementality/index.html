@@ -1,1 +1,59 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hillstrom 增量分析</title><style>body{max-width:900px;margin:36px auto;padding:0 22px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.65}h1,h2{color:#173f67}table{border-collapse:collapse;width:100%;margin:14px 0}th,td{border:1px solid #dce3ea;padding:8px;text-align:left}th{background:#edf3f8}img{max-width:100%;margin:10px 0}a{color:#1f6598}</style></head><body><p><a href="../index.html">返回作品集</a></p><h1>营销投放增量与因果分析</h1><p><b>业务问题：</b>邮件营销是否带来增量访问、购买和收入？是否值得扩大预算？</p><h2>关键结果</h2><ul><li>男装邮件相对不发邮件，访问率提升 7.66 个百分点，转化率提升 0.681 个百分点，客均消费增量约 $0.772。</li><li>女装邮件访问率提升 4.52 个百分点，转化率提升 0.311 个百分点，客均消费增量约 $0.424。</li><li>在 40% 毛利率、每封邮件成本 $0.05 的情景下，两种邮件的模型增量利润均为正。</li></ul><h2>方法</h2><p>随机实验 ITT、两比例比较、Welch 检验、Bootstrap 置信区间、用户分层、增量利润与 ROI 敏感性分析。</p><img src="results/conversion_by_treatment.png" alt="转化率比较"><p><a href="EXECUTIVE_REPORT.md">执行摘要</a> · <a href="README.md">复现说明</a> · <a href="src/analyze_hillstrom.py">Python脚本</a> · <a href="sql/analysis.sql">SQL</a></p></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hillstrom 营销投放增量与因果分析</title>
+  <style>
+    body{max-width:960px;margin:32px auto;padding:0 24px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.7}
+    h1,h2,h3{color:#173f67} h1{border-bottom:3px solid #173f67;padding-bottom:10px} h2{margin-top:30px}
+    .lead{font-size:18px;background:#edf3f8;padding:16px;border-left:4px solid #2d6a9f}
+    table{border-collapse:collapse;width:100%;margin:14px 0}th,td{border:1px solid #dce3ea;padding:9px;text-align:left}th{background:#edf3f8}
+    img{max-width:100%;margin:12px 0}a{color:#1f6598}code{background:#f2f4f6;padding:2px 4px}
+    .note{font-size:14px;color:#5d6b78}.links{background:#f7f9fb;padding:14px}
+  </style>
+</head>
+<body>
+  <p><a href="../index.html">返回作品集首页</a></p>
+  <h1>营销投放增量与因果分析</h1>
+  <p class="lead"><b>决策问题：</b>邮件营销是否带来超出自然购买的增量访问、购买和收入？如果要扩量，男装邮件、女装邮件和选择性投放应该如何排序？</p>
+
+  <h2>一、业务背景与初步洞察</h2>
+  <p>营销团队通常能看到“发过邮件的人买了多少”，但这不能回答邮件是否真正带来了增量。没有邮件的人也可能自然购买；如果把发送后的全部销售额归因给邮件，预算会被高估。</p>
+  <p>因此，本项目把问题从“邮件组销售额是多少”改写为“相对于不发邮件，邮件带来了多少额外结果”，并进一步连接到预算和利润决策。</p>
+
+  <h2>二、为什么选择这个数据集</h2>
+  <p>Hillstrom Email Marketing Dataset 包含一个公开的三组随机营销实验：客户被分到男装邮件、女装邮件或不发邮件。它同时有处理变量、访问、购买、消费金额和投放前客户特征，能够支持从描述性分析走到因果效果和商业 ROI。</p>
+  <ul><li>样本量：64,000 名客户</li><li>处理组：男装邮件 21,307；女装邮件 21,387；不发邮件 21,306</li><li>结果变量：<code>visit</code>、<code>conversion</code>、<code>spend</code></li><li>分层变量：历史消费、是否新客、渠道等</li><li>数据质量：关键字段无缺失值</li></ul>
+  <p>数据来源：<a href="https://blog.minethatdata.com/2008/03/minethatdata-e-mail-analytics-and-data-mining-challenge.html">MineThatData 原始说明</a> · <a href="http://www.minethatdata.com/Kevin_Hillstrom_MineThatData_E-MailAnalytics_DataMiningChallenge_2008.03.20.csv">原始 CSV</a></p>
+
+  <h2>三、问题、假设与指标</h2>
+  <h3>假设</h3>
+  <ul><li>H1：男装邮件相对不发邮件提高访问率和转化率。</li><li>H2：女装邮件相对不发邮件提高访问率和转化率。</li><li>H3：处理效应在不同客户分层之间存在差异。</li></ul>
+  <table><tr><th>指标</th><th>定义</th><th>业务含义</th></tr><tr><td>Visit rate</td><td><code>visit / customers</code></td><td>邮件带来的访问增量</td></tr><tr><td>Conversion rate</td><td><code>conversion / customers</code></td><td>客户层面的购买概率</td></tr><tr><td>客均消费</td><td><code>spend / customers</code></td><td>每触达客户带来的收入</td></tr><tr><td>增量利润</td><td><code>客均消费增量 × 毛利率 - 邮件成本</code></td><td>是否值得扩量</td></tr></table>
+  <p>分析采用客户级 ITT（按随机分配比较），不把“打开邮件”或“访问网站”当成处理条件，避免产生选择偏差。</p>
+
+  <h2>四、分析方法与验证</h2>
+  <h3>1. 随机性和平衡性</h3>
+  <p>先检查字段类型、缺失值、重复值和三组样本量，再对 <code>recency</code>、<code>history</code>、<code>mens</code>、<code>womens</code>、<code>newbie</code> 以及历史消费、地区和渠道计算标准化均值差异（SMD）。两种邮件组相对控制组的最大绝对 SMD 分别约为 0.016 和 0.014，支持投放前可比。</p>
+  <h3>2. 总体处理效应</h3>
+  <p>以不发邮件组为控制组，计算访问率、转化率和客均消费差异；访问率和转化率使用两比例比较，客均消费使用 Welch 检验；对客均消费差异使用 1,200 次客户级 Bootstrap 生成 95% 区间。</p>
+  <h3>3. 异质性与经济测算</h3>
+  <p>按历史消费、是否新客和渠道分组重新计算差异。由于 <code>spend</code> 是收入而不是利润，设置毛利率 20%、40%、60%与邮件成本 $0.01、$0.05、$0.10 的情景，计算增量利润和 ROI。</p>
+
+  <h2>五、结果与洞察</h2>
+  <table><tr><th>处理</th><th>访问率提升</th><th>转化率提升</th><th>客均消费增量</th><th>Bootstrap 95% CI</th></tr><tr><td>男装邮件</td><td>+7.66 pp</td><td>+0.681 pp</td><td>+$0.772</td><td>[$0.487, $1.056]</td></tr><tr><td>女装邮件</td><td>+4.52 pp</td><td>+0.311 pp</td><td>+$0.424</td><td>[$0.146, $0.681]</td></tr></table>
+  <p>在 40% 毛利率、每封邮件成本 $0.05 的情景下，两种邮件的模型增量利润均为正；当女装邮件成本升到 $0.10 时，模型增量利润转负。历史消费分层显示男装邮件在多个消费区间保持正向，女装邮件在部分中间消费段较弱。</p>
+  <img src="results/conversion_by_treatment.png" alt="转化率比较">
+  <img src="results/conversion_lift_by_history_segment.png" alt="历史消费分层转化提升">
+
+  <h2>六、商业结论与行动建议</h2>
+  <ol><li>男装邮件可以进入更大规模的验证，优先确认毛利、退货和长期复购是否抵消短期收入增量。</li><li>女装邮件不建议仅凭总体平均效果全量扩张，优先按历史消费和商品偏好做定向 A/B 测试。</li><li>下一轮实验预先注册主指标、保护指标和停止规则；主指标优先使用增量毛利或客均贡献利润，而不是单独看访问率。</li></ol>
+
+  <h2>七、局限性</h2>
+  <ul><li>实验发生于 2008 年，不能直接外推到当前渠道和用户结构。</li><li><code>spend</code> 是收入，不是利润；真实 ROI 需要邮件成本、毛利、退货、退订和长期价值。</li><li>分层结果是探索性的，需要新的独立实验验证。</li></ul>
+
+  <h2>八、复现与证据</h2>
+  <div class="links"><a href="EXECUTIVE_REPORT.md">Markdown 完整报告</a> · <a href="src/analyze_hillstrom.py">Python 分析脚本</a> · <a href="sql/analysis.sql">SQL 查询</a> · <a href="results/group_summary.csv">组间统计</a> · <a href="results/effect_vs_control.csv">处理效应</a> · <a href="results/balance_check.csv">平衡性检查</a> · <a href="results/subgroup_effects.csv">客户分层</a> · <a href="results/economic_scenarios.csv">经济情景</a></div>
+</body>
+</html>

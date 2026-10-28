@@ -1,1 +1,41 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Criteo Uplift 分析</title><style>body{max-width:900px;margin:36px auto;padding:0 22px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.65}h1,h2{color:#173f67}img{max-width:100%;margin:10px 0}a{color:#1f6598}</style></head><body><p><a href="../index.html">返回作品集</a></p><h1>广告投放增量建模与用户分层</h1><p><b>业务问题：</b>预算有限时，哪些用户更可能因广告而增加访问？</p><h2>样本结果</h2><ul><li>使用 Criteo 官方 uplift 数据的 5,000 行真实样本。</li><li>样本处理组访问率约 4.40%，控制组约 3.88%，差异约 +0.53 个百分点，区间跨过 0。</li><li>使用处理组/控制组 T-learner 生成 uplift 排名，并把高 uplift 人群作为下一轮实验候选。</li></ul><p><b>边界：</b>样本结果不能外推为全量数据效果，不能直接替代真实预算决策。</p><img src="results/uplift_decile_curve.png" alt="uplift分层诊断"><p><a href="EXECUTIVE_REPORT.md">执行摘要</a> · <a href="README.md">复现说明</a> · <a href="src/analyze_criteo.py">Python脚本</a> · <a href="sql/analysis.sql">SQL</a></p></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Criteo 广告投放增量建模</title>
+  <style>body{max-width:960px;margin:32px auto;padding:0 24px;font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#243447;line-height:1.7}h1,h2,h3{color:#173f67}h1{border-bottom:3px solid #173f67;padding-bottom:10px}.lead{font-size:18px;background:#edf3f8;padding:16px;border-left:4px solid #2d6a9f}table{border-collapse:collapse;width:100%;margin:14px 0}th,td{border:1px solid #dce3ea;padding:9px;text-align:left}th{background:#edf3f8}img{max-width:100%;margin:12px 0}a{color:#1f6598}code{background:#f2f4f6;padding:2px 4px}.note{font-size:14px;color:#5d6b78}.links{background:#f7f9fb;padding:14px}</style>
+</head>
+<body>
+  <p><a href="../index.html">返回作品集首页</a></p>
+  <h1>广告投放增量建模与用户分层</h1>
+  <p class="lead"><b>决策问题：</b>在广告预算有限时，哪些用户更可能因为处理而增加访问？总体投放效果是否足以支持扩量？</p>
+
+  <h2>一、业务背景与初步洞察</h2>
+  <p>广告团队面对的不是“谁更容易转化”，而是“谁会因为广告而额外转化”。如果只训练转化预测模型，模型可能把原本就会访问的用户排在前面，导致预算浪费和广告疲劳。这个项目因此把预测目标从 propensity 改成 uplift。</p>
+
+  <h2>二、为什么选择这个数据集</h2>
+  <p>Criteo Uplift Prediction Dataset 是广告 uplift 建模的公开基准，字段同时包含匿名用户特征、<code>treatment</code>、<code>visit</code>、<code>conversion</code> 和 <code>exposure</code>。它比普通广告点击数据更适合研究增量，因为 treatment 和结果变量在同一张表中，可以把“预测谁会转化”和“预测谁会因广告改变行为”区分开。</p>
+  <ul><li>官方数据规模约 1,397.9 万行</li><li>匿名特征 12 个</li><li>结果变量：访问、转化、曝光</li><li>本项目从全量行索引等间距抽取 50 页、共 5,000 行真实记录</li></ul>
+  <p>来源：<a href="https://ailab.criteo.com/criteo-uplift-prediction-dataset/">Criteo AI Lab 数据说明</a>。抽样规则保存在 <a href="data/sample_metadata.json">sample_metadata.json</a>。</p>
+
+  <h2>三、问题、假设与指标</h2>
+  <h3>假设</h3><ul><li>H1：处理组访问率高于控制组。</li><li>H2：处理组转化率高于控制组，但低频转化需要更大样本。</li><li>H3：处理效应在匿名特征分布不同的用户之间存在异质性。</li></ul>
+  <table><tr><th>指标</th><th>定义</th><th>业务含义</th></tr><tr><td>Visit rate</td><td><code>visit / rows</code></td><td>广告带来的访问增量</td></tr><tr><td>Conversion rate</td><td><code>conversion / rows</code></td><td>最终转化增量</td></tr><tr><td>Exposure rate</td><td><code>exposure / rows</code></td><td>实际曝光状态，不等于利润</td></tr><tr><td>Uplift</td><td><code>P(Y|x,t=1)-P(Y|x,t=0)</code></td><td>同一用户接受与不接受处理的预测差异</td></tr></table>
+
+  <h2>四、数据处理与方法选择</h2>
+  <h3>1. 抽样与处理比例诊断</h3><p>抽样脚本固定 50 个行索引位置，每个位置取 100 行，去重后保留 5,000 行。样本处理比例约 84%，与官方数据处理比例接近；但抽样并非完整随机抽样，因此本项目不把样本结果写成全量估计。</p>
+  <h3>2. 总体处理效应</h3><p>先按 treatment 分组计算 visit、conversion 和 exposure 率，再使用两比例差异和近似 95% 区间，先回答“平均上有没有信号”，不急于上模型。</p>
+  <h3>3. T-learner uplift 排序</h3><p>直接训练一个转化预测模型优化的是 <code>P(Y|X)</code>，不能识别处理增量。本项目分别在处理组和控制组训练逻辑回归，估计：</p><p><code>predicted uplift = P(visit | X, treatment=1) - P(visit | X, treatment=0)</code></p><p>再按预测 uplift 分十组，比较每组真实处理组与控制组的访问差异。由于样本只有 5,000 行且转化稀疏，分层结果只作为下一轮随机实验的候选排序。</p>
+
+  <h2>五、结果与洞察</h2>
+  <table><tr><th>结果变量</th><th>处理组</th><th>控制组</th><th>差异</th><th>近似 95% 区间</th></tr><tr><td>Visit</td><td>4.40%</td><td>3.88%</td><td>+0.53 pp</td><td>[-0.94, +2.00] pp</td></tr><tr><td>Conversion</td><td>0.191%</td><td>0.125%</td><td>+0.065 pp</td><td>[-0.213, +0.344] pp</td></tr><tr><td>Exposure</td><td>3.74%</td><td>0%</td><td>+3.74 pp</td><td>字段定义差异</td></tr></table>
+  <p>当前样本不能确认访问或转化提升。T-learner 分层中，最高预测 uplift 的前 20% 观察到正向访问差异，最低分层观察到负向差异；但分层波动明显，必须用全量数据和独立实验验证。</p>
+  <img src="results/uplift_decile_curve.png" alt="uplift分层诊断">
+
+  <h2>六、商业结论与行动建议</h2><ol><li>当前样本不支持直接扩张广告预算；先在全量数据上复现平均处理效应并完成样本量/功效检查。</li><li>将高 uplift 前 10%至20%作为下一轮随机实验的候选人群，设置随机 holdout，比较增量访问、增量转化和增量毛利。</li><li>预算决策必须纳入 CPM/CPC、毛利、频控、退订、长期留存和广告疲劳；visit uplift 不能直接等于利润。</li><li>生产模型需要独立时间切分、稳定性监控和模型漂移检查，避免把样本中的偶然排序当成定向规则。</li></ol>
+
+  <h2>七、局限性</h2><ul><li>本报告使用 5,000 行索引样本，不代表官方全量数据。</li><li>官方数据经过隐私相关抽样处理，原始广告增量水平不能直接从样本外推。</li><li>匿名特征缺乏可解释业务含义，模型只能用于排序。</li><li>逻辑回归 T-learner 是基线方法，需要样本外 Qini/AUUC 和成本敏感性验证。</li></ul>
+
+  <h2>八、复现与证据</h2><div class="links"><a href="EXECUTIVE_REPORT.md">Markdown 完整报告</a> · <a href="src/fetch_criteo_sample.py">样本抽取脚本</a> · <a href="src/analyze_criteo.py">分析脚本</a> · <a href="sql/analysis.sql">SQL 查询</a> · <a href="results/treatment_summary.csv">处理组统计</a> · <a href="results/average_treatment_effects.csv">总体处理效应</a> · <a href="results/uplift_deciles.csv">uplift 分层</a> · <a href="README.md">项目复现说明</a></div>
+</body>
+</html>

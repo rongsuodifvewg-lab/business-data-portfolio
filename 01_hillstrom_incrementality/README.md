@@ -30,6 +30,7 @@ python src/analyze_hillstrom.py
 
 - `results/group_summary.csv`：三组描述统计
 - `results/effect_vs_control.csv`：处理效应与置信区间
+- `results/balance_check.csv`：随机分组前置变量的标准化差异
 - `results/subgroup_effects.csv`：客户分层效果
 - `results/economic_scenarios.csv`：毛利率和邮件成本情景
 - `results/conversion_by_treatment.png`：转化率比较

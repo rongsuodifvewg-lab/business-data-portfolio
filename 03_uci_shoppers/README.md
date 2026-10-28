@@ -31,6 +31,7 @@ python src/analyze_uci_shoppers.py
 - `results/buyer_behavior_summary.csv`
 - `results/logit_coefficients.csv`
 - `results/model_metrics.json`
+- `results/targeting_thresholds.csv`：按预测分数优先触达的业务阈值
 - `results/conversion_by_visitor_type.png`
 - `results/conversion_by_month.png`
 - `results/buyer_behavior_profile.png`
