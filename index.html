@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>徐润滋 | 商业分析与数据分析作品集</title>
+  <style>
+    body { max-width: 980px; margin: 40px auto; padding: 0 24px; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: #243447; line-height: 1.65; }
+    h1 { color: #173f67; margin-bottom: 6px; }
+    .intro { color: #5d6b78; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 26px; }
+    .card { border: 1px solid #dce3ea; border-radius: 6px; padding: 18px; background: #fff; }
+    .card h2 { font-size: 18px; margin: 0 0 8px; color: #173f67; }
+    .card p { font-size: 14px; color: #53616e; }
+    a { color: #1f6598; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .tag { display: inline-block; background: #edf3f8; color: #315978; padding: 2px 8px; margin: 3px 4px 0 0; border-radius: 3px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>商业分析与数据分析作品集</h1>
+  <p class="intro">每个项目都按“业务问题 → 指标口径 → 数据质量 → 分析方法 → 商业建议 → 局限性”组织。</p>
+  <div class="grid">
+    <article class="card">
+      <h2>营销投放增量与因果分析</h2>
+      <p>Hillstrom 64,000 名客户随机邮件实验，估计 ITT、Bootstrap 区间、用户异质性和增量 ROI。</p>
+      <span class="tag">A/B Testing</span><span class="tag">Causal Inference</span><span class="tag">ROI</span>
+      <p><a href="01_hillstrom_incrementality/index.html">打开项目页面</a> · <a href="01_hillstrom_incrementality/README.md">查看复现说明</a></p>
+    </article>
+    <article class="card">
+      <h2>广告投放增量建模</h2>
+      <p>Criteo 官方 uplift 数据的 5,000 行真实样本，计算处理效应并用 T-learner 做 uplift 分层诊断。</p>
+      <span class="tag">Uplift</span><span class="tag">T-learner</span><span class="tag">Budgeting</span>
+      <p><a href="02_criteo_uplift/index.html">打开项目页面</a> · <a href="02_criteo_uplift/README.md">查看复现说明</a></p>
+    </article>
+    <article class="card">
+      <h2>电商转化漏斗与用户行为</h2>
+      <p>UCI 12,330 次网站会话，分析用户类型、季节性、页面行为与购买转化，建立逻辑回归排序模型。</p>
+      <span class="tag">SQL</span><span class="tag">Funnel</span><span class="tag">Logistic Regression</span>
+      <p><a href="03_uci_shoppers/index.html">打开项目页面</a> · <a href="03_uci_shoppers/README.md">查看复现说明</a></p>
+    </article>
+  </div>
+  <p style="margin-top: 28px;"><a href="README.md">查看完整项目索引与统一面试讲法</a></p>
+</body>
+</html>

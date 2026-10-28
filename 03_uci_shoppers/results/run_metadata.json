@@ -1,0 +1,26 @@
+{
+  "source": "https://archive.ics.uci.edu/dataset/468/online+shoppers+purchasing+intention+dataset",
+  "rows": 12330,
+  "columns": [
+    "Administrative",
+    "Administrative_Duration",
+    "Informational",
+    "Informational_Duration",
+    "ProductRelated",
+    "ProductRelated_Duration",
+    "BounceRates",
+    "ExitRates",
+    "PageValues",
+    "SpecialDay",
+    "Month",
+    "OperatingSystems",
+    "Browser",
+    "Region",
+    "TrafficType",
+    "VisitorType",
+    "Weekend",
+    "Revenue"
+  ],
+  "target": "Revenue",
+  "causal_boundary": "No treatment assignment; results are descriptive/predictive and not causal."
+}

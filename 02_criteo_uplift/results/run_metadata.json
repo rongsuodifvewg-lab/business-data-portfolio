@@ -1,0 +1,21 @@
+{
+  "rows_analyzed": 5000,
+  "features": [
+    "f0",
+    "f1",
+    "f2",
+    "f3",
+    "f4",
+    "f5",
+    "f6",
+    "f7",
+    "f8",
+    "f9",
+    "f10",
+    "f11"
+  ],
+  "target_for_uplift_model": "visit",
+  "source": "https://ailab.criteo.com/criteo-uplift-prediction-dataset/",
+  "sample_warning": "Results are computed on a 5,000-row deterministic index sample retrieved from the dataset viewer, not on the full 13,979,592-row dataset.",
+  "model": "T-learner with separate treated/control logistic regressions; decile comparison is diagnostic, not a production targeting policy."
+}

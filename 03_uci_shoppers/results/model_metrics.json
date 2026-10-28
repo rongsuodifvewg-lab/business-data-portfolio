@@ -1,0 +1,7 @@
+{
+  "test_rows": 3083,
+  "roc_auc": 0.8968860764788884,
+  "average_precision": 0.6199366870666126,
+  "brier_score": 0.12387034602636902,
+  "note": "Predictive metrics describe ranking/calibration and do not establish causal effects."
+}

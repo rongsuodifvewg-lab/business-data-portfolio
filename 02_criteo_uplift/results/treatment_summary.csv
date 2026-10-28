@@ -1,0 +1,3 @@
+group,n,treatment_rate,visit_rate,conversion_rate,exposure_rate
+control,800,0.0,0.03875,0.00125,0.0
+treatment,4200,1.0,0.04404761904761905,0.0019047619047619048,0.03738095238095238

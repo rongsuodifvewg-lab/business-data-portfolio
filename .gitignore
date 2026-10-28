@@ -1,0 +1,5 @@
+01_hillstrom_incrementality/data/*.csv
+02_criteo_uplift/data/*.csv
+03_uci_shoppers/data/*.csv
+03_uci_shoppers/data/*.zip
+03_uci_shoppers/data/unzipped/
